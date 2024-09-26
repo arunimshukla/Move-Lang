@@ -39,21 +39,78 @@ The contract uses two main structs:
 
 Initializes the token contract. This should be called once by the contract owner.
 
+```rust
+public fun initialize(account: &signer) {
+    assert!(signer::address_of(account) == @my_addrx, 0);
+    move_to(account, TokenInfo { total_supply: 0 });
+}
+```
+
 2. `mint(account: &signer, amount: u64)`
 
 Mints new tokens and assigns them to the specified account.
+
+```rust
+public fun mint(account: &signer, amount: u64) acquires TokenInfo {
+    let addr = signer::address_of(account);
+    
+    // Update total supply
+    let token_info = borrow_global_mut<TokenInfo>(@my_addrx);
+    token_info.total_supply = token_info.total_supply + amount;
+
+    // Add tokens to user's balance
+    if (!exists<UserTokenStore>(addr)) {
+        move_to(account, UserTokenStore { balance: amount });
+    } else {
+        let user_store = borrow_global_mut<UserTokenStore>(addr);
+        user_store.balance = user_store.balance + amount;
+    }
+}
+```
 
 3. `transfer(from: &signer, to: address, amount: u64)`
 
 Transfers tokens from one account to another.
 
+```rust
+public fun transfer(from: &signer, to: address, amount: u64) acquires UserTokenStore {
+    let from_addr = signer::address_of(from);
+    assert!(exists<UserTokenStore>(from_addr), 1);
+    assert!(exists<UserTokenStore>(to), 2);
+
+    let from_store = borrow_global_mut<UserTokenStore>(from_addr);
+    assert!(from_store.balance >= amount, 3);
+    from_store.balance = from_store.balance - amount;
+
+    let to_store = borrow_global_mut<UserTokenStore>(to);
+    to_store.balance = to_store.balance + amount;
+}
+```
+
 4. `balance_of(addr: address): u64`
 
 Returns the token balance of a given address.
 
+```rust
+public fun balance_of(addr: address): u64 acquires UserTokenStore {
+    if (!exists<UserTokenStore>(addr)) {
+        return 0
+    } else {
+        let user_store = borrow_global<UserTokenStore>(addr);
+        return user_store.balance
+    }
+}
+```
+
 5. `total_supply(): u64`
 
 Returns the total supply of tokens.
+
+``` rust
+public fun total_supply(): u64 acquires TokenInfo {
+    borrow_global<TokenInfo>(@my_addrx).total_supply
+}
+```
 
 ## Getting Started
 
@@ -61,46 +118,65 @@ To use this contract, you need to have the Aptos development environment set up.
 
 ## Clone this repository:
 
-git clone https://github.com/your-username/aptos-basic-token.git
-
+``` git
+git clone https://github.com/your-username/MOVE-LANG.git
+```
+``` git
 cd move-lang
+```
 
 Modify the `my_addrx` address in the contract to your actual Aptos address.
 
-Compile the contract:
+### Compile the contract:
 
-`aptos move compile`
+``` git
+aptos move compile
+```
 
-Run tests (if available):
+### Run tests (if available):
 
-`aptos move test`
+``` git
+aptos move test
+```
 
-Publish the module to the Aptos blockchain:
+### Publish the module to the Aptos blockchain:
 
-`aptos move publish`
+```git
+aptos move publish
+```
 
 # Usage
 
 After deploying the contract, you can interact with it using the Aptos CLI or by writing a client application. Here are some example commands:
 
-- Initialize the contract:
+### Initialize the contract:
 
-`aptos move run --function-id 'your_address::basic_token::initialize'`
+``` git
+aptos move run --function-id 'your_address::basic_token::initialize
+```
 
-- Mint tokens:
+### Mint tokens:
 
-`aptos move run --function-id 'your_address::basic_token::mint' --args u64:1000`
+``` git
+aptos move run --function-id 'your_address::basic_token::mint' --args u64:1000
+```
 
-- Transfer tokens:
+### Transfer tokens:
 
-`aptos move run --function-id 'your_address::basic_token::transfer' --args address:recipient_address u64:100`
+``` git
+aptos move run --function-id 'your_address::basic_token::transfer' --args address:recipient_address u64:100
+```
 
-- Check balance:
+### Check balance:
 
-`aptos move run --function-id 'your_address::basic_token::balance_of' --args address:account_address`
+``` git
+aptos move run --function-id 'your_address::basic_token::balance_of' --args address:account_address
+```
 
-- Get total supply:
-`aptos move run --function-id 'your_address::basic_token::total_supply'`
+### Get total supply:
+```git
+aptos move run --function-id 'your_address::basic_token::total_supply
+```
 
 ## Important Considerations
 
