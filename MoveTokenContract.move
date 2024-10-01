@@ -1,5 +1,3 @@
-```typescript
-
 module my_addrx::basic_token {
     use std::signer;
     use aptos_framework::coin;
